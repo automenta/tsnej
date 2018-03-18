@@ -5,9 +5,9 @@ import static java.lang.Math.sqrt;
 
 public class DataPoint {
 	
-	int _ind;
+	private final int _ind;
 	double [] _x;
-	int _D;
+	final int _D;
 	
 	public DataPoint() {
         _D = 1;
@@ -22,11 +22,11 @@ public class DataPoint {
 	
 	@Override
 	public String toString() {
-		String xStr = "";
+		StringBuilder xStr = new StringBuilder();
 		for (int i = 0; i < min(20,_x.length); i++) {
-			xStr += _x[i] + ", ";
+			xStr.append(_x[i]).append(", ");
 		}
-		return "DataPoint (index=" + _ind+ ", Dim=" + _D + ", point=" + xStr + ")"; 
+		return xStr.append("DataPoint (index=").append(_ind).append(", Dim=").append(_D).append(", point=").append(xStr).append(')').toString();
 	}
 
 	public int index() { return _ind; }

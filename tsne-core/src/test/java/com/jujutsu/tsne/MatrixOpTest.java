@@ -1,14 +1,15 @@
 package com.jujutsu.tsne;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import com.jujutsu.utils.MatrixOps;
+import com.jujutsu.utils.MatrixUtils;
+import org.junit.Test;
 
 import java.io.File;
 
-import org.junit.Test;
-
-import com.jujutsu.utils.MatrixOps;
-import com.jujutsu.utils.MatrixUtils;
+import static com.jujutsu.utils.MatrixOps.parScalarMultiply;
+import static com.jujutsu.utils.MatrixOps.scalarMultiply;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class MatrixOpTest {
 	
@@ -26,7 +27,7 @@ public class MatrixOpTest {
 	
 	@Test
 	public void testTimeManyTransposes() {
-		MatrixOps mo = new MatrixOps();
+
 		int rows = 15302;
 		int cols = 1143;
 		double [][] matrix = new double [rows][cols];
@@ -37,7 +38,7 @@ public class MatrixOpTest {
 				trmatrix[j][i] = (double) j + (i*cols);
 			}
 		}
-		int noLaps = 10;
+		int noLaps = 4;
 		long trtime = 0;
 		long partrtime = 0;
 		long time = 0;
@@ -45,18 +46,16 @@ public class MatrixOpTest {
 			time = System.currentTimeMillis();
 			double [][] tr1 = MatrixOps.transposeSerial(matrix);
 			trtime += (System.currentTimeMillis()-time);
-			assertEquals(tr1.length,cols);
-			assertEquals(tr1[0].length,rows);
+			assertEquals(cols, tr1.length);
+			assertEquals(rows, tr1[0].length);
 			time = System.currentTimeMillis();
-			double [][] tr2 = mo.transpose(matrix,20);
+			double [][] tr2 = MatrixOps.transpose(matrix,20);
 			partrtime += (System.currentTimeMillis()-time);
-			assertEquals(tr2.length,cols);
-			assertEquals(tr2[0].length,rows);
+			assertEquals(cols, tr2.length);
+			assertEquals(rows, tr2[0].length);
 			for (int i = 0; i < tr1.length; i++) {
-				for (int j = 0; j < tr1[0].length; j++) {
-					assertEquals(trmatrix[i][j],tr1[i][j],0.0000001);
-					assertEquals("I: " + i + " J:" + j, trmatrix[i][j],tr2[i][j],0.0000001);
-				}
+                assertArrayEquals(trmatrix[i],tr1[i],0.0000001);
+                assertArrayEquals(trmatrix[i],tr2[i],0.0000001);
 			}
 		}
 		System.out.println("    Tr time: " + trtime);
@@ -66,7 +65,7 @@ public class MatrixOpTest {
 	
 	@Test
 	public void timeTransposesNist() {
-		MatrixOps mo = new MatrixOps();
+
 		double [][] matrix = MatrixUtils.simpleRead2DMatrix(new File("src/test/resources/datasets/mnist2500_X.txt"), " ");
 		int rows = matrix.length;
 		int cols = matrix[0].length;
@@ -76,28 +75,30 @@ public class MatrixOpTest {
 				trmatrix[j][i] = matrix[i][j];
 			}
 		}
-		int noLaps = 300;
+		int noLaps = 50;
 		long trtime = 0;
 		long partrtime = 0;
 		long time = 0;
 		System.out.println("Size is: " + rows + " x" + cols + "...");
 		for (int laps = 0; laps < noLaps; laps++) {
-			if((laps%100)==0) System.out.println("Iter " + laps + "...");
+			if((laps%10)==0) System.out.println("Iter " + laps + "...");
 			time = System.currentTimeMillis();
 			double [][] tr1 = MatrixOps.transposeSerial(matrix);
 			trtime += (System.currentTimeMillis()-time);
 			assertEquals(tr1.length,cols);
 			assertEquals(tr1[0].length,rows);
 			time = System.currentTimeMillis();
-			double [][] tr2 = mo.transpose(matrix,20);
+			double [][] tr2 = MatrixOps.transpose(matrix,20);
 			partrtime += (System.currentTimeMillis()-time);
 			assertEquals(tr2.length,cols);
 			assertEquals(tr2[0].length,rows);
 			for (int i = 0; i < tr1.length; i++) {
-				for (int j = 0; j < tr1[0].length; j++) {
-					assertEquals(trmatrix[i][j],tr1[i][j],0.0000001);
-					assertEquals("I: " + i + " J:" + j, trmatrix[i][j],tr2[i][j],0.0000001);
-				}
+				assertArrayEquals(trmatrix[i], tr1[i], 0.0000001);
+				assertArrayEquals(trmatrix[i], tr2[i], 0.0000001);
+//				for (int j = 0; j < tr1[0].length; j++) {
+//					assertEquals(trmatrix[i][j],tr1[i][j],0.0000001);
+//					//assertEquals("I: " + i + " J:" + j, trmatrix[i][j],tr2[i][j],0.0000001);
+//				}
 			}
 		}
 		System.out.println("    Tr time: " + trtime);
@@ -106,28 +107,35 @@ public class MatrixOpTest {
 	
 	@Test
 	public void timeScalarMultNist() {
-		MatrixOps mo = new MatrixOps();
 		double [][] matrix1 = MatrixUtils.simpleRead2DMatrix(new File("src/test/resources/datasets/mnist2500_X.txt"), " ");
 		double [][] matrix2 = MatrixUtils.simpleRead2DMatrix(new File("src/test/resources/datasets/mnist2500_X.txt"), " ");
 		int rows = matrix1.length;
 		int cols = matrix1[0].length;
-		int noLaps = 300;
+		int noLaps = 50;
 		long trtime = 0;
 		long partrtime = 0;
 		long time = 0;
 		System.out.println("Size is " + rows + " x " + cols + "...");
 		for (int laps = 0; laps < noLaps; laps++) {
-			if((laps%100)==0) System.out.println("Iter " + laps + "...");
+			if((laps%10)==0) System.out.println("Iter " + laps + "...");
 			time = System.currentTimeMillis();
-			double [][] tr1 = mo.scalarMultiply(matrix1, matrix2);
+
+			double [][] tr1 = scalarMultiply(matrix1, matrix2);
+
 			trtime += (System.currentTimeMillis()-time);
 			time = System.currentTimeMillis();
-			double [][] tr2 = mo.parScalarMultiply(matrix1, matrix2);
+
+			double [][] tr2 = parScalarMultiply(matrix1, matrix2);
+
 			partrtime += (System.currentTimeMillis()-time);
+
 			for (int i = 0; i < tr1.length; i++) {
-				for (int j = 0; j < tr1[0].length; j++) {
-					assertEquals("I: " + i + " J:" + j, tr1[i][j],tr2[i][j],0.0000001);
-				}
+				assertArrayEquals(tr1[i], tr2[i],0.0000001);
+//				int tl = tr1[0].length;
+//				for (int j = 0; j < tl; j++) {
+//					assertEquals(//"I: " + i + " J:" + j,
+//							tr1[i][j],tr2[i][j],0.0000001);
+//				}
 			}
 		}
 		System.out.println("    Tr time: " + trtime);

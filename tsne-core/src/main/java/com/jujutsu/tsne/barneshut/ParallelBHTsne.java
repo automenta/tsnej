@@ -1,37 +1,31 @@
 package com.jujutsu.tsne.barneshut;
 
-import static java.lang.Math.exp;
-import static java.lang.Math.log;
+import com.jujutsu.utils.MatrixOps;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.*;
 
-import com.jujutsu.utils.MatrixOps;
+import static java.lang.Math.exp;
+import static java.lang.Math.log;
 
 public class ParallelBHTsne extends BHTSne {
 
 	private ForkJoinPool gradientPool;
 	private ExecutorService	gradientCalculationPool;
 
-	class RecursiveGradientCalculator extends RecursiveAction {
+	static class RecursiveGradientCalculator extends RecursiveAction {
 		final static long serialVersionUID = 1L;
 		int startRow = -1;
 		int endRow = -1;
 		int limit = 100;
-		SPTree tree;
-		double[][] neg_f;
-		double theta;
-		AtomicDouble sum_Q;
+		final SPTree tree;
+		final double[][] neg_f;
+		final double theta;
+		final AtomicDouble sum_Q;
 
-		public RecursiveGradientCalculator(SPTree tree, double [][] neg_f , double theta, 
-				AtomicDouble sum_Q, int startRow, int endRow, int ll) {
+		RecursiveGradientCalculator(SPTree tree, double[][] neg_f, double theta,
+									AtomicDouble sum_Q, int startRow, int endRow, int ll) {
 			this.limit = ll;
 			this.startRow = startRow;
 			this.endRow = endRow;
@@ -52,23 +46,22 @@ public class ParallelBHTsne extends BHTSne {
 				int range = (endRow-startRow);
 				int startDoc1 = startRow;
 				int endDoc1 = startRow + (range / 2);
-				int startDoc2 = endDoc1;
 				int endDoc2 = endRow;
-				invokeAll(new RecursiveGradientCalculator(tree,neg_f, theta, sum_Q, startDoc1, endDoc1, limit),
-						new RecursiveGradientCalculator(tree,neg_f, theta, sum_Q, startDoc2, endDoc2, limit));
+				invokeAll(new RecursiveGradientCalculator(tree, neg_f, theta, sum_Q, startDoc1, endDoc1, limit),
+                        new RecursiveGradientCalculator(tree, neg_f, theta, sum_Q, endDoc1, endDoc2, limit));
 			}
 		}
 	}
 
-	class ParallelGradientCalculator implements Callable<Double> {
+	static class ParallelGradientCalculator implements Callable<Double> {
 		final static long serialVersionUID = 1L;
 		int row = -1;
 		int limit = 100;
-		ParallelSPTree tree;
-		double[][] neg_f;
-		double theta;
+		final ParallelSPTree tree;
+		final double[][] neg_f;
+		final double theta;
 
-		public ParallelGradientCalculator(ParallelSPTree tree, double [][] neg_f , double theta, int row, int ll) {
+		ParallelGradientCalculator(ParallelSPTree tree, double[][] neg_f, double theta, int row, int ll) {
 			this.limit = ll;
 			this.row = row;
 			this.tree = tree;
@@ -91,22 +84,22 @@ public class ParallelBHTsne extends BHTSne {
 		return Y;
 	}
 
-	class RecursiveGradientUpdater extends RecursiveAction {
+	static class RecursiveGradientUpdater extends RecursiveAction {
 		final static long serialVersionUID = 1L;
 		int startIdx = -1;
 		int endIdx = -1;
 		int limit = 100;
-		int N;
-		int no_dims;
-		double[] Y;
-		double momentum;
-		double eta; 
-		double[] dY; 
-		double[] uY;
-		double[] gains;
+		final int N;
+		final int no_dims;
+		final double[] Y;
+		final double momentum;
+		final double eta;
+		final double[] dY;
+		final double[] uY;
+		final double[] gains;
 
-		public RecursiveGradientUpdater(int n, int no_dims, double[] Y, double momentum, double eta, double[] dY, double[] uY,
-				double[] gains, int startIdx, int endIdx, int limit) {
+		RecursiveGradientUpdater(int n, int no_dims, double[] Y, double momentum, double eta, double[] dY, double[] uY,
+								 double[] gains, int startIdx, int endIdx, int limit) {
 			super();
 			this.startIdx = startIdx;
 			this.endIdx = endIdx;
@@ -140,7 +133,7 @@ public class ParallelBHTsne extends BHTSne {
 				int endIdx1 = startIdx + (range / 2);
 				int endIdx2 = endIdx;
 				invokeAll(new RecursiveGradientUpdater(N, no_dims, Y, momentum, eta, dY, uY, gains, startIdx1, endIdx1, limit),
-						new RecursiveGradientUpdater(N, no_dims, Y, momentum, eta, dY, uY, gains, endIdx1, endIdx2, limit));
+                        new RecursiveGradientUpdater(N, no_dims, Y, momentum, eta, dY, uY, gains, endIdx1, endIdx2, limit));
 			}
 		}
 	}
@@ -148,7 +141,7 @@ public class ParallelBHTsne extends BHTSne {
 	@Override
 	void updateGradient(int N, int no_dims, double[] Y, double momentum, double eta, double[] dY, double[] uY,
 			double[] gains) {
-		RecursiveGradientUpdater dslr = new RecursiveGradientUpdater(N, no_dims, Y, momentum, eta, dY, uY, gains,0,N * no_dims,N/(Runtime.getRuntime().availableProcessors()*10));                
+		RecursiveGradientUpdater dslr = new RecursiveGradientUpdater(N, no_dims, Y, momentum, eta, dY, uY, gains, 0, N * no_dims, N / (Runtime.getRuntime().availableProcessors() * 10));
 		gradientPool.invoke(dslr);
 	}
 
@@ -182,10 +175,7 @@ public class ParallelBHTsne extends BHTSne {
 				double tmp = result.get();
 				sum_Q += tmp;
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -211,16 +201,13 @@ public class ParallelBHTsne extends BHTSne {
 		 *_col_P = (int*)    calloc(N * K, sizeof(int));
 		 *_val_P = (double*) calloc(N * K, sizeof(double));
 			    if(*_row_P == null || *_col_P == null || *_val_P == null) { Rcpp::stop("Memory allocation failed!\n"); }*/
-		int [] row_P = _row_P;
-		int [] col_P = _col_P;
-		double [] val_P = _val_P;
 		double [] cur_P = new double[N - 1];
 
-		row_P[0] = 0;
-		for(int n = 0; n < N; n++) row_P[n + 1] = row_P[n] + K;    
+		_row_P[0] = 0;
+		for(int n = 0; n < N; n++) _row_P[n + 1] = _row_P[n] + K;
 
 		// Build ball tree on data set
-		ParallelVpTree<DataPoint> tree = new ParallelVpTree<DataPoint>(gradientPool,distance);
+		ParallelVpTree<DataPoint> tree = new ParallelVpTree<>(gradientPool, distance);
 		final DataPoint [] obj_X = new DataPoint [N];
 		for(int n = 0; n < N; n++) {
 			double [] row = MatrixOps.extractRowFromFlatMatrix(X,n,D);
@@ -307,8 +294,8 @@ public class ParallelBHTsne extends BHTSne {
 			// Row-normalize current row of P and store in matrix 
 			for(int m = 0; m < K; m++) {
 				cur_P[m] /= sum_P;
-				col_P[row_P[n] + m] = indices.get(m + 1).index();
-				val_P[row_P[n] + m] = cur_P[m];
+				_col_P[_row_P[n] + m] = indices.get(m + 1).index();
+				_val_P[_row_P[n] + m] = cur_P[m];
 			}
 		}
 	}

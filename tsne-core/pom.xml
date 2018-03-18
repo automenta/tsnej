@@ -15,25 +15,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 	
-	<scm>
-		<connection>scm:git:file:///home/eralljn/workspace/T-SNE-Java</connection>
-	</scm>
 
 	<dependencies>
 		<dependency>
-			<groupId>gov.nist.math</groupId>
-			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<groupId>org.ejml</groupId>
+			<artifactId>ejml-core</artifactId>
+			<version>0.33</version>
 		</dependency>
+
 		<dependency>
-			<groupId>com.googlecode.efficient-java-matrix-library</groupId>
-			<artifactId>core</artifactId>
-			<version>0.26</version>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.efficient-java-matrix-library</groupId>
-			<artifactId>equation</artifactId>
-			<version>0.26</version>
+			<groupId>org.ejml</groupId>
+			<artifactId>ejml-ddense</artifactId>
+			<version>0.33</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -41,17 +34,17 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.github.fommil.netlib</groupId>
-			<artifactId>all</artifactId>
-			<version>1.1.2</version>
-			<type>pom</type>
-		</dependency>
-		<dependency>
-			<groupId>org.jblas</groupId>
-			<artifactId>jblas</artifactId>
-			<version>1.2.3</version>
-		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>com.github.fommil.netlib</groupId>-->
+			<!--<artifactId>all</artifactId>-->
+			<!--<version>1.1.2</version>-->
+			<!--<type>pom</type>-->
+		<!--</dependency>-->
+		<!--<dependency>-->
+			<!--<groupId>org.jblas</groupId>-->
+			<!--<artifactId>jblas</artifactId>-->
+			<!--<version>1.2.3</version>-->
+		<!--</dependency>-->
 	</dependencies>
 	
 	<build>
@@ -61,9 +54,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<forkCount>3</forkCount>
-					<reuseForks>true</reuseForks>
-					<argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+					<!--<forkCount>3</forkCount>-->
+					<!--<reuseForks>true</reuseForks>-->
+					<!--<argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>-->
 				</configuration>
 			</plugin>
 			<plugin>
@@ -86,7 +79,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.0.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -101,7 +94,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>1.6</version>
+				<version>3.1.0</version>
 				<configuration>
 					<createDependencyReducedPom>true</createDependencyReducedPom>
 					<filters>
@@ -136,10 +129,10 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.6.2</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.11</source>
+					<target>1.11</target>
 				</configuration>
 			</plugin>
 		</plugins>

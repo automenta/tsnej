@@ -1,20 +1,20 @@
 package com.jujutsu.tsne.barneshut;
 
+import com.jujutsu.utils.MatrixOps;
+
 import static java.lang.Math.max;
 import static java.lang.Math.sqrt;
-
-import com.jujutsu.utils.MatrixOps;
 
 public class SPTree {
 
 	  // Fixed constants
-    final static int QT_NODE_CAPACITY = 1;
+    private final static int QT_NODE_CAPACITY = 1;
         
-	protected SPTree parent;
-	protected int dimension;
-	protected boolean is_leaf;
-	protected int size;
-	protected int cum_size;
+	private SPTree parent;
+	int dimension;
+	boolean is_leaf;
+	int size;
+	int cum_size;
 	
 	 // Axis-aligned bounding box stored as a center with half-dimensions to represent the boundaries of this quad tree
     Cell boundary;
@@ -22,7 +22,7 @@ public class SPTree {
     // Indices in this space-partitioning tree node, corresponding center-of-mass, and list of all children
     double[] data;
     double[] center_of_mass;
-    int [] index = new int[QT_NODE_CAPACITY];
+    final int [] index = new int[QT_NODE_CAPACITY];
     
     // Children
     SPTree [] children;
@@ -46,7 +46,7 @@ public class SPTree {
 			}
 			nD += D;
 		}
-		for(int d = 0; d < D; d++) mean_Y[d] /= (double) N;
+		for(int d = 0; d < D; d++) mean_Y[d] /= N;
 
 		// Construct SPTree
 		double [] width = new double [D];
@@ -56,7 +56,7 @@ public class SPTree {
 	}
 
 	// Main initialization function
-	void init(SPTree inp_parent, int D, double [] inp_data, double [] inp_corner, double [] inp_width)
+	private void init(SPTree inp_parent, int D, double[] inp_data, double[] inp_corner, double[] inp_width)
 	{
 		parent = inp_parent;
 		dimension = D;
@@ -125,7 +125,7 @@ public class SPTree {
 	}
 
 	// Insert a point into the SPTree
-	boolean insert(int new_index)
+	private boolean insert(int new_index)
 	{
 		// Ignore objects which do not belong in this quad tree
 		double [] point = MatrixOps.extractRowFromFlatMatrix(data,new_index,dimension);
@@ -135,8 +135,8 @@ public class SPTree {
 
 		// Online update of cumulative size and center-of-mass
 		cum_size++;
-		double mult1 = (double) (cum_size - 1) / (double) cum_size;
-		double mult2 = 1.0 / (double) cum_size;
+		double mult1 = (double) (cum_size - 1) / cum_size;
+		double mult2 = 1.0 / cum_size;
 		for(int d = 0; d < dimension; d++) {
 			center_of_mass[d] *= mult1;
 			center_of_mass[d] += mult2 * point[d];
@@ -174,7 +174,7 @@ public class SPTree {
 	}
 
 	// Create four children which fully divide this cell into four quads of equal area
-	void subdivide() {
+	private void subdivide() {
 
 		// Create new children
 		double [] new_corner = new double[dimension];
@@ -209,14 +209,14 @@ public class SPTree {
 	}
 
 	// Build SPTree on dataset
-	void fill(int N)
+	private void fill(int N)
 	{
 		for(int i = 0; i < N; i++) insert(i);
 	}
 
 
 	// Checks whether the specified tree is correct
-	boolean isCorrect()
+	private boolean isCorrect()
 	{
 		for(int n = 0; n < size; n++) {
 			double [] point = MatrixOps.extractRowFromFlatMatrix(data, index[n], dimension);
@@ -240,11 +240,11 @@ public class SPTree {
 
 
 	// Build a list of all indices in SPTree
-	int getAllIndices(int [] indices, int loc)
+	private int getAllIndices(int[] indices, int loc)
 	{
 
 		// Gather indices in current quadrant
-		for(int i = 0; i < size; i++) indices[loc + i] = index[i];
+        System.arraycopy(index, 0, indices, loc + 0, size);
 		loc += size;
 
 		// Gather indices in children
@@ -255,7 +255,7 @@ public class SPTree {
 	}
 
 
-	int getDepth() {
+	private int getDepth() {
 		if(is_leaf) return 1;
 		int depth = 0;
 		for(int i = 0; i < no_children; i++) depth = max(depth, children[i].getDepth());
@@ -330,35 +330,35 @@ public class SPTree {
 
 
 	// Print out tree
-	void print() 
+	private void print()
 	{
 		if(cum_size == 0) {
-			System.out.printf("Empty node\n");
+			System.out.print("Empty node\n");
 			return;
 		}
 
 		if(is_leaf) {
-			System.out.printf("Leaf node; data = [");
+			System.out.print("Leaf node; data = [");
 			for(int i = 0; i < size; i++) {
 				double [] point = MatrixOps.extractRowFromFlatMatrix(data, index[i], dimension);
 				for(int d = 0; d < dimension; d++) System.out.printf("%f, ", point[d]);
 				System.out.printf(" (index = %d)", index[i]);
-				if(i < size - 1) System.out.printf("\n");
-				else System.out.printf("]\n");
+				if(i < size - 1) System.out.print("\n");
+				else System.out.print("]\n");
 			}        
 		}
 		else {
-			System.out.printf("Intersection node with center-of-mass = [");
+			System.out.print("Intersection node with center-of-mass = [");
 			for(int d = 0; d < dimension; d++) System.out.printf("%f, ", center_of_mass[d]);
-			System.out.printf("]; children are:\n");
+			System.out.print("]; children are:\n");
 			for(int i = 0; i < no_children; i++) children[i].print();
 		}
 	}
 	
-	class Cell {		
-		int dimension;
-		double [] corner;
-		double [] width;
+	static class Cell {
+		final int dimension;
+		final double [] corner;
+		final double [] width;
 		    
 		// Constructs cell
 		Cell(int inp_dimension) {

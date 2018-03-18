@@ -6,9 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class MatrixUtils {
-	public static double[][] simpleRead2DMatrix(File file) {
+    private static final Pattern LINE = Pattern.compile("\\s*");
+
+    public static double[][] simpleRead2DMatrix(File file) {
 		return simpleRead2DMatrix(file, " ");
 	}
 	
@@ -18,11 +21,11 @@ public class MatrixUtils {
         try (FileReader fr = new FileReader(file)) {
             BufferedReader b = new BufferedReader(fr);
             String line;
-            while ((line = b.readLine()) != null && !line.matches("\\s*")) {
+            while ((line = b.readLine()) != null && !LINE.matcher(line).matches()) {
                 String[] cols = line.trim().split(columnDelimiter);
                 double [] row = new double[cols.length];
                 for (int j = 0; j < cols.length; j++) {
-                	if(!(cols[j].length()==0)) {
+                	if(!(cols[j].isEmpty())) {
                 		row[j] = Double.parseDouble(cols[j].trim());
                     }
                 }

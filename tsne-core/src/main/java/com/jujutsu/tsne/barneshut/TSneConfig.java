@@ -1,15 +1,15 @@
 package com.jujutsu.tsne.barneshut;
 
 public class TSneConfig implements TSneConfiguration {
-	protected double[][] xin;
-	protected int outputDims;
-	protected int initial_dims;
-	protected double perplexity;
-	protected int max_iter;
-	protected boolean use_pca;
-	protected double theta;
-	protected boolean silent;
-	protected boolean print_error;
+	private double[][] xin;
+	private int outputDims;
+	private int initial_dims;
+	private double perplexity;
+	private int max_iter;
+	private boolean use_pca;
+	private double theta;
+	private boolean silent;
+	private boolean print_error;
 
 	public TSneConfig(double[][] xin, int outputDims, int initial_dims, double perplexity, int max_iter,
 			boolean use_pca, double theta, boolean silent, boolean print_error) {

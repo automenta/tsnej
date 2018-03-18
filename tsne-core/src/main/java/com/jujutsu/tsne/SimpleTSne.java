@@ -1,38 +1,9 @@
 package com.jujutsu.tsne;
 
-import static com.jujutsu.utils.MatrixOps.abs;
-import static com.jujutsu.utils.MatrixOps.addColumnVector;
-import static com.jujutsu.utils.MatrixOps.addRowVector;
-import static com.jujutsu.utils.MatrixOps.assignAllLessThan;
-import static com.jujutsu.utils.MatrixOps.assignAtIndex;
-import static com.jujutsu.utils.MatrixOps.assignValuesToRow;
-import static com.jujutsu.utils.MatrixOps.biggerThan;
-import static com.jujutsu.utils.MatrixOps.concatenate;
-import static com.jujutsu.utils.MatrixOps.diag;
-import static com.jujutsu.utils.MatrixOps.equal;
-import static com.jujutsu.utils.MatrixOps.exp;
-import static com.jujutsu.utils.MatrixOps.fillMatrix;
-import static com.jujutsu.utils.MatrixOps.getValuesFromRow;
-import static com.jujutsu.utils.MatrixOps.log;
-import static com.jujutsu.utils.MatrixOps.maximum;
-import static com.jujutsu.utils.MatrixOps.mean;
-import static com.jujutsu.utils.MatrixOps.negate;
-import static com.jujutsu.utils.MatrixOps.plus;
-import static com.jujutsu.utils.MatrixOps.range;
-import static com.jujutsu.utils.MatrixOps.replaceNaN;
-import static com.jujutsu.utils.MatrixOps.rnorm;
-import static com.jujutsu.utils.MatrixOps.scalarDivide;
-import static com.jujutsu.utils.MatrixOps.scalarInverse;
-import static com.jujutsu.utils.MatrixOps.scalarMult;
-import static com.jujutsu.utils.MatrixOps.scalarPlus;
-import static com.jujutsu.utils.MatrixOps.sqrt;
-import static com.jujutsu.utils.MatrixOps.square;
-import static com.jujutsu.utils.MatrixOps.sum;
-import static com.jujutsu.utils.MatrixOps.tile;
-import static com.jujutsu.utils.MatrixOps.times;
-
 import com.jujutsu.tsne.barneshut.TSneConfiguration;
 import com.jujutsu.utils.MatrixOps;
+
+import static com.jujutsu.utils.MatrixOps.*;
 
 /**
 *
@@ -44,8 +15,7 @@ import com.jujutsu.utils.MatrixOps;
 *
 */
 public class SimpleTSne implements TSne {
-	MatrixOps mo = new MatrixOps();
-	protected volatile boolean abort = false;
+	private volatile boolean abort = false;
 
 	@Override
 	public double [][] tsne(TSneConfiguration config) {
@@ -58,7 +28,7 @@ public class SimpleTSne implements TSne {
 		
 		String IMPLEMENTATION_NAME = this.getClass().getSimpleName();
 		System.out.println("X:Shape is = " + X.length + " x " + X[0].length);
-		System.out.println("Running " + IMPLEMENTATION_NAME + ".");
+		System.out.println("Running " + IMPLEMENTATION_NAME + '.');
 		// Initialize variables
 		if(use_pca && X[0].length > initial_dims && initial_dims > 0) {
 			PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis();
@@ -79,7 +49,7 @@ public class SimpleTSne implements TSne {
 		
 		// Compute P-values
 		double [][] P = x2p(X, 1e-5, perplexity).P;
-		P = plus(P , mo.transpose(P));
+		P = plus(P , transpose(P));
 		P = scalarDivide(P,sum(P));
 		P = scalarMult(P , 4);					// early exaggeration
 		P = maximum(P, 1e-12);
@@ -89,9 +59,9 @@ public class SimpleTSne implements TSne {
 		// Run iterations
 		for (int iter = 0; iter < max_iter && !abort; iter++) {
 			// Compute pairwise affinities
-			double [][] sum_Y = mo.transpose(sum(square(Y), 1));
-			double [][] num = scalarInverse(scalarPlus(addRowVector(mo.transpose(addRowVector(scalarMult(
-					times(Y, mo.transpose(Y)),
+			double [][] sum_Y = transpose(sum(square(Y), 1));
+			double [][] num = scalarInverse(scalarPlus(addRowVector(transpose(addRowVector(scalarMult(
+					times(Y, transpose(Y)),
 					-2),
 					sum_Y)),
 					sum_Y),
@@ -102,28 +72,28 @@ public class SimpleTSne implements TSne {
 			Q = maximum(Q, 1e-12);
 
 			// Compute gradient
-			double[][] L = mo.scalarMultiply(mo.minus(P , Q), num);
-		    dY = scalarMult(times(mo.minus(diag(sum(L, 1)),L) , Y), 4);
+			double[][] L = scalarMultiply(minus(P , Q), num);
+		    dY = scalarMult(times(minus(diag(sum(L, 1)),L) , Y), 4);
 			
 			// Perform the update
 			if (iter < 20)
 				momentum = initial_momentum;
 			else
 				momentum = final_momentum;
-			gains = plus(mo.scalarMultiply(scalarPlus(gains,.2), abs(negate(equal(biggerThan(dY,0.0),biggerThan(iY,0.0))))),
-					mo.scalarMultiply(scalarMult(gains,.8), abs(equal(biggerThan(dY,0.0),biggerThan(iY,0.0)))));
+			gains = plus(scalarMultiply(scalarPlus(gains,.2), abs(negate(equal(biggerThan(dY,0.0),biggerThan(iY,0.0))))),
+					scalarMultiply(scalarMult(gains,.8), abs(equal(biggerThan(dY,0.0),biggerThan(iY,0.0)))));
 
 			assignAllLessThan(gains, min_gain, min_gain);
-			iY = mo.minus(scalarMult(iY,momentum) , scalarMult(mo.scalarMultiply(gains , dY),eta));
+			iY = minus(scalarMult(iY,momentum) , scalarMult(scalarMultiply(gains , dY),eta));
 			Y = plus(Y , iY);
 			//double [][] tile = tile(mean(Y, 0), n, 1);
-			Y = mo.minus(Y , tile(mean(Y, 0), n, 1));
+			Y = minus(Y , tile(mean(Y, 0), n, 1));
 
 			// Compute current value of cost function
 			if ((iter % 100 == 0))   {
 				double [][] logdivide = log(scalarDivide(P , Q));
 				logdivide = replaceNaN(logdivide,0);
-				double C = sum(mo.scalarMultiply(P , logdivide));
+				double C = sum(scalarMultiply(P , logdivide));
 				System.out.println("Iteration " + (iter + 1) + ": error is " + C);
 			} else if((iter + 1) % 10 == 0) {
 				System.out.println("Iteration " + (iter + 1));
@@ -138,10 +108,10 @@ public class SimpleTSne implements TSne {
 		return Y;
 	}
 
-	public R Hbeta (double [][] D, double beta){
+	private R Hbeta(double[][] D, double beta){
 		double [][] P = exp(scalarMult(scalarMult(D,beta),-1));
 		double sumP = sum(P);   // sumP confirmed scalar
-		double H = Math.log(sumP) + beta * sum(mo.scalarMultiply(D,P)) / sumP;
+		double H = Math.log(sumP) + beta * sum(scalarMultiply(D,P)) / sumP;
 		P = scalarDivide(P,sumP);
 		R r = new R();
 		r.H = H;
@@ -149,12 +119,12 @@ public class SimpleTSne implements TSne {
 		return r;
 	}
 
-	public R x2p(double [][] X,double tol, double perplexity){
+	private R x2p(double[][] X, double tol, double perplexity){
 		int n               = X.length;
 		double [][] sum_X   = sum(square(X), 1);
-		double [][] times   = scalarMult(times(X, mo.transpose(X)), -2);
-		double [][] prodSum = addColumnVector(mo.transpose(times), sum_X);
-		double [][] D       = addRowVector(prodSum, mo.transpose(sum_X));
+		double [][] times   = scalarMult(times(X, transpose(X)), -2);
+		double [][] prodSum = addColumnVector(transpose(times), sum_X);
+		double [][] D       = addRowVector(prodSum, transpose(sum_X));
 		// D seems correct at this point compared to Python version
 		double [][] P       = fillMatrix(n,n,0.0);
 		double [] beta      = fillMatrix(n,n,1.0)[0];

@@ -1,19 +1,19 @@
 package com.jujutsu.tsne.barneshut;
 
+import com.jujutsu.tsne.barneshut.VpTree.Node;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.jujutsu.tsne.barneshut.VpTree.Node;
-
 @SuppressWarnings("rawtypes")
-public class TreePrinter {
+class TreePrinter {
 	
-	public interface AdditionalInfoProvider {
-		public String provideInfo(Node node);
+	interface AdditionalInfoProvider {
+		String provideInfo(Node node);
 	}
 	
-	AdditionalInfoProvider provider;
+	private AdditionalInfoProvider provider;
 
 	public TreePrinter() {
 	}
@@ -39,12 +39,12 @@ public class TreePrinter {
 
 		printWhitespaces(firstSpaces);
 
-		List<Node> newNodes = new ArrayList<Node>();
+		List<Node> newNodes = new ArrayList<>();
 		for (Node node : nodes) {
 			if (node != null) {
 				System.out.print(node.index);
 				if(provider!=null) {
-					System.out.print("(" +provider.provideInfo(node) +")");
+					System.out.print('(' +provider.provideInfo(node) + ')');
 				}
 				newNodes.add(node.getLeft());
 				newNodes.add(node.getRight());
@@ -56,7 +56,7 @@ public class TreePrinter {
 
 			printWhitespaces(betweenSpaces);
 		}
-		System.out.println("");
+		System.out.println();
 
 		for (int i = 1; i <= endgeLines; i++) {
 			for (int j = 0; j < nodes.size(); j++) {
@@ -81,13 +81,13 @@ public class TreePrinter {
 				printWhitespaces(endgeLines + endgeLines - i);
 			}
 
-			System.out.println("");
+			System.out.println();
 		}
 
 		printNodeInternal(newNodes, level + 1, maxLevel);
 	}
 
-	private void printWhitespaces(int count) {
+	private static void printWhitespaces(int count) {
 		for (int i = 0; i < count; i++)
 			System.out.print(" ");
 	}
@@ -99,7 +99,7 @@ public class TreePrinter {
 		return Math.max(maxLevel(node.getLeft()), maxLevel(node.getRight())) + 1;
 	}
 
-	private <T> boolean isAllElementsNull(List<T> list) {
+	private static <T> boolean isAllElementsNull(List<T> list) {
 		for (Object object : list) {
 			if (object != null)
 				return false;
@@ -124,7 +124,7 @@ public class TreePrinter {
 		} else {
 			System.out.print(node.index);
 			if(provider!=null) {
-				System.out.print("(" +provider.provideInfo(node) +")");
+				System.out.print('(' +provider.provideInfo(node) + ')');
 			}
 		}
 		System.out.print('\n');

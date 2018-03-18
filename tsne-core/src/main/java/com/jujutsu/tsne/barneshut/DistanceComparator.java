@@ -3,8 +3,8 @@ package com.jujutsu.tsne.barneshut;
 import java.util.Comparator;
 
 public class DistanceComparator implements Comparator<DataPoint> {
-	DataPoint refItem; 
-	Distance dist;
+	private final DataPoint refItem;
+	private final Distance dist;
 	
 	DistanceComparator(DataPoint refItem) {
 		this.refItem = refItem;
@@ -18,7 +18,6 @@ public class DistanceComparator implements Comparator<DataPoint> {
 
 	@Override
 	public int compare(DataPoint o1, DataPoint o2) {
-		return dist.distance(o1, refItem) < dist.distance(o2, refItem) ? -1 :
-			(dist.distance(o1, refItem) > dist.distance(o2, refItem) ? 1 : 0);
+		return Double.compare(dist.distance(o1, refItem), dist.distance(o2, refItem));
 	}
 }

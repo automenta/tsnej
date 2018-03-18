@@ -1,18 +1,13 @@
 package com.jujutsu.tsne.barneshut;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 
 public class ParallelVpTree<StorageType> extends VpTree<StorageType> {
 
-	private ForkJoinPool searcherPool;
+	private final ForkJoinPool searcherPool;
 	
 	public ParallelVpTree(ForkJoinPool pool, Distance distance) {
 		super(distance);
@@ -24,14 +19,13 @@ public class ParallelVpTree<StorageType> extends VpTree<StorageType> {
 	}
 	
 	public List<Future<ParallelTreeNode.TreeSearchResult>> searchMultiple(ParallelVpTree<StorageType> tree, DataPoint [] targets, int k) {
-		List<ParallelTreeNode.ParallelTreeSearcher> searchers = new ArrayList<>();
+		Collection<ParallelTreeNode.ParallelTreeSearcher> searchers = new ArrayList<>();
 		for(int n = 0; n < targets.length; n++) {
 			@SuppressWarnings("unchecked")
 			ParallelTreeNode node = (ParallelTreeNode) tree.getRoot();
 			searchers.add(node.new ParallelTreeSearcher(node,_items,targets[n], k, n));
 		}
-		List<Future<ParallelTreeNode.TreeSearchResult>> results =  searcherPool.invokeAll(searchers);
-		return results;
+		return searcherPool.invokeAll(searchers);
 	}
 
 	@Override
@@ -42,11 +36,11 @@ public class ParallelVpTree<StorageType> extends VpTree<StorageType> {
 	class ParallelTreeNode extends VpTree<StorageType>.Node {
 		
 		class TreeSearchResult {
-			int n;
-			List<Double> distances;
-			List<DataPoint> indices;
+			final int n;
+			final List<Double> distances;
+			final List<DataPoint> indices;
 			
-			public TreeSearchResult(List<DataPoint> indices, List<Double> distances, int n) {
+			TreeSearchResult(List<DataPoint> indices, List<Double> distances, int n) {
 				this.indices = indices;
 				this.distances = distances;
 				this.n = n;
@@ -68,14 +62,14 @@ public class ParallelVpTree<StorageType> extends VpTree<StorageType> {
 		}
 
 		class ParallelTreeSearcher implements Callable<TreeSearchResult> {
-			Node node;
+			final Node node;
 			Queue<HeapItem> heap;
-			DataPoint target;
-			int k;
-			int n;
-			DataPoint [] items;
+			final DataPoint target;
+			final int k;
+			final int n;
+			final DataPoint [] items;
 
-			public ParallelTreeSearcher(Node tree, DataPoint [] items, DataPoint target, int k, int n) {
+			ParallelTreeSearcher(Node tree, DataPoint[] items, DataPoint target, int k, int n) {
 				this.node = tree;
 				this.target = target;
 				this.k = k;
@@ -87,12 +81,7 @@ public class ParallelVpTree<StorageType> extends VpTree<StorageType> {
 			public TreeSearchResult call() {
 				List<DataPoint> indices = new ArrayList<>();
 				List<Double> distances = new ArrayList<>();
-				PriorityQueue<HeapItem> heap = new PriorityQueue<HeapItem>(k,new Comparator<HeapItem>() {
-					@Override
-					public int compare(HeapItem o1, HeapItem o2) {
-						return -1 * o1.compareTo(o2);
-					}
-				}); 
+				PriorityQueue<HeapItem> heap = new PriorityQueue<>(k, (o1, o2) -> -1 * o1.compareTo(o2));
 
 				double tau = Double.MAX_VALUE;
 				// Perform the search

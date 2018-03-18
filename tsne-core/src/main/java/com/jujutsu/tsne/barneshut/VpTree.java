@@ -1,20 +1,15 @@
 package com.jujutsu.tsne.barneshut;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class VpTree<StorageType> {
 
 	DataPoint [] _items;
-	Node _root;
-	Distance distance; 
+	private Node _root;
+	private final Distance distance;
 	
-	public VpTree() {
+	VpTree() {
 		distance = new EuclideanDistance();
 	}
 
@@ -30,12 +25,7 @@ public class VpTree<StorageType> {
 	public void search(DataPoint target, int k, List<DataPoint> results, List<Double> distances) {
 		// Use a priority queue to store intermediate results on
 		// Javas prio heap is by default in ascending order, we want descending... 
-		PriorityQueue<HeapItem> heap = new PriorityQueue<HeapItem>(k,new Comparator<HeapItem>() {
-			@Override
-			public int compare(HeapItem o1, HeapItem o2) {
-				return -1 * o1.compareTo(o2);
-			}
-		}); 
+		PriorityQueue<HeapItem> heap = new PriorityQueue<>(k, (o1, o2) -> -1 * o1.compareTo(o2));
         
         // Variable that tracks the distance to the farthest point in our results
         double tau = Double.MAX_VALUE;
@@ -58,7 +48,7 @@ public class VpTree<StorageType> {
 	}
 
 	// Function that (recursively) fills the tree
-	public Node buildFromPoints( int lower, int upper )
+    private Node buildFromPoints(int lower, int upper)
 	{
 		if (upper == lower) {     // indicates that we're done here!
 			return null;
@@ -91,43 +81,35 @@ public class VpTree<StorageType> {
 		return node;
 	}
 	
-	protected VpTree<StorageType>.Node createNode() {
+	VpTree<StorageType>.Node createNode() {
 		return new Node();
 	}
 
-	public Node getRoot() {
+	Node getRoot() {
 		return _root;
 	}
 	
 	// Quick and dirty... optimize later :D
 	static void nth_element(DataPoint [] array, int low, int mid, int high,
-			DistanceComparator distanceComparator) {
+							Comparator<DataPoint> distanceComparator) {
 		DataPoint [] tmp = new DataPoint[high-low];
-		for (int i = 0; i < tmp.length; i++) {
-			tmp[i] = array[low+i];
-		}
+        System.arraycopy(array, low + 0, tmp, 0, tmp.length);
 		Arrays.sort(tmp, distanceComparator);
-		for (int i = 0; i < tmp.length; i++) {
-			array[low+i] = tmp[i];
-		}
+        System.arraycopy(tmp, 0, array, low + 0, tmp.length);
 	}
 	
 	static void nth_element(int [] array, int low, int mid, int high) {
 		int [] tmp = new int[high-low];
-		for (int i = 0; i < tmp.length; i++) {
-			tmp[i] = array[low+i];
-		}
+        System.arraycopy(array, low + 0, tmp, 0, tmp.length);
 		Arrays.sort(tmp);
-		for (int i = 0; i < tmp.length; i++) {
-			array[low+i] = tmp[i];
-		}
+        System.arraycopy(tmp, 0, array, low + 0, tmp.length);
 	}
 
-	public double distance(DataPoint dataPoint1, DataPoint dataPoint2) {
+	private double distance(DataPoint dataPoint1, DataPoint dataPoint2) {
 		return distance.distance(dataPoint1, dataPoint2);
 	}
 	
-	private void swap(DataPoint [] items, int idx1,int idx2) {
+	private static void swap(DataPoint[] items, int idx1, int idx2) {
 		DataPoint dp = items[idx1];
 		items[idx1] = items[idx2];
 		items[idx2] = dp;
@@ -135,8 +117,8 @@ public class VpTree<StorageType> {
 
 	// An item on the intermediate result queue
     static class HeapItem implements Comparable<HeapItem> {
-    	int index;
-    	double dist;
+    	final int index;
+    	final double dist;
     	HeapItem( int index, double dist) {
     		this.index = index;
     		this.dist = dist; 
@@ -144,24 +126,24 @@ public class VpTree<StorageType> {
 
     	@Override
 		public int compareTo(HeapItem o) {
-			return dist < o.dist ? -1 : (dist > o.dist ? 1 : 0);
+			return Double.compare(dist, o.dist);
 		}
     	
     	@Override
     	public String toString() {
-    		return "HeapItem (index=" + index + ",dist=" + dist + ")"; 
+    		return "HeapItem (index=" + index + ",dist=" + dist + ')';
     	}
-    };
+    }
 
 	class Node {
 		int index;
 		double threshold;
-		protected Node left;
-		protected Node right;
+		Node left;
+		Node right;
 		
 		@Override
 		public String toString() {
-			return "Node(id=" + index + ")";
+			return "Node(id=" + index + ')';
 		}
 		
 		public Node getLeft() {

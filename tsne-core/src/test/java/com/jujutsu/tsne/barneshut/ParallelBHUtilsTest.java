@@ -1,10 +1,10 @@
 package com.jujutsu.tsne.barneshut;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class ParallelBHUtilsTest {
 

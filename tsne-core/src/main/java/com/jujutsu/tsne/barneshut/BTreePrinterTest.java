@@ -6,21 +6,21 @@ import java.util.List;
 public class BTreePrinterTest {
 
     private static Node<Integer> test1() {
-        Node<Integer> root = new Node<Integer>(2);
-        Node<Integer> n11 = new Node<Integer>(7);
-        Node<Integer> n12 = new Node<Integer>(5);
-        Node<Integer> n21 = new Node<Integer>(2);
-        Node<Integer> n22 = new Node<Integer>(6);
-        Node<Integer> n23 = new Node<Integer>(3);
-        Node<Integer> n24 = new Node<Integer>(6);
-        Node<Integer> n31 = new Node<Integer>(5);
-        Node<Integer> n32 = new Node<Integer>(8);
-        Node<Integer> n33 = new Node<Integer>(4);
-        Node<Integer> n34 = new Node<Integer>(5);
-        Node<Integer> n35 = new Node<Integer>(8);
-        Node<Integer> n36 = new Node<Integer>(4);
-        Node<Integer> n37 = new Node<Integer>(5);
-        Node<Integer> n38 = new Node<Integer>(8);
+        Node<Integer> root = new Node<>(2);
+        Node<Integer> n11 = new Node<>(7);
+        Node<Integer> n12 = new Node<>(5);
+        Node<Integer> n21 = new Node<>(2);
+        Node<Integer> n22 = new Node<>(6);
+        Node<Integer> n23 = new Node<>(3);
+        Node<Integer> n24 = new Node<>(6);
+        Node<Integer> n31 = new Node<>(5);
+        Node<Integer> n32 = new Node<>(8);
+        Node<Integer> n33 = new Node<>(4);
+        Node<Integer> n34 = new Node<>(5);
+        Node<Integer> n35 = new Node<>(8);
+        Node<Integer> n36 = new Node<>(4);
+        Node<Integer> n37 = new Node<>(5);
+        Node<Integer> n38 = new Node<>(8);
 
         root.left = n11;
         root.right = n12;
@@ -43,15 +43,15 @@ public class BTreePrinterTest {
     }
 
     private static Node<Integer> test2() {
-        Node<Integer> root = new Node<Integer>(2);
-        Node<Integer> n11 = new Node<Integer>(7);
-        Node<Integer> n12 = new Node<Integer>(5);
-        Node<Integer> n21 = new Node<Integer>(2);
-        Node<Integer> n22 = new Node<Integer>(6);
-        Node<Integer> n23 = new Node<Integer>(9);
-        Node<Integer> n31 = new Node<Integer>(5);
-        Node<Integer> n32 = new Node<Integer>(8);
-        Node<Integer> n33 = new Node<Integer>(4);
+        Node<Integer> root = new Node<>(2);
+        Node<Integer> n11 = new Node<>(7);
+        Node<Integer> n12 = new Node<>(5);
+        Node<Integer> n21 = new Node<>(2);
+        Node<Integer> n22 = new Node<>(6);
+        Node<Integer> n23 = new Node<>(9);
+        Node<Integer> n31 = new Node<>(5);
+        Node<Integer> n32 = new Node<>(8);
+        Node<Integer> n33 = new Node<>(4);
 
         root.left = n11;
         root.right = n12;
@@ -78,7 +78,7 @@ public class BTreePrinterTest {
 
 class Node<T extends Comparable<?>> {
     Node<T> left, right;
-    T data;
+    final T data;
 
     public Node(T data) {
         this.data = data;
@@ -104,7 +104,7 @@ class BTreePrinter {
 
         BTreePrinter.printWhitespaces(firstSpaces);
 
-        List<Node<T>> newNodes = new ArrayList<Node<T>>();
+        List<Node<T>> newNodes = new ArrayList<>();
         for (Node<T> node : nodes) {
             if (node != null) {
                 System.out.print(node.data);
@@ -118,7 +118,7 @@ class BTreePrinter {
 
             BTreePrinter.printWhitespaces(betweenSpaces);
         }
-        System.out.println("");
+        System.out.println();
 
         for (int i = 1; i <= endgeLines; i++) {
             for (int j = 0; j < nodes.size(); j++) {
@@ -143,7 +143,7 @@ class BTreePrinter {
                 BTreePrinter.printWhitespaces(endgeLines + endgeLines - i);
             }
 
-            System.out.println("");
+            System.out.println();
         }
 
         printNodeInternal(newNodes, level + 1, maxLevel);
@@ -161,7 +161,7 @@ class BTreePrinter {
         return Math.max(BTreePrinter.maxLevel(node.left), BTreePrinter.maxLevel(node.right)) + 1;
     }
 
-    private static <T> boolean isAllElementsNull(List<T> list) {
+    private static <T> boolean isAllElementsNull(Iterable<T> list) {
         for (Object object : list) {
             if (object != null)
                 return false;

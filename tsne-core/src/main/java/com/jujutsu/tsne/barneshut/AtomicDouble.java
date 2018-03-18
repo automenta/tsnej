@@ -3,17 +3,18 @@ package com.jujutsu.tsne.barneshut;
 import java.util.concurrent.atomic.AtomicReference;
 
 class AtomicDouble {
-    private AtomicReference<Double> value = new AtomicReference<Double>(Double.valueOf(0.0));
+    private final AtomicReference<Double> value = new AtomicReference<>(0.0);
     double addAndGet(double delta) {
-        while (true) {
-            Double currentValue = value.get();
-            Double newValue = Double.valueOf(currentValue.doubleValue() + delta);
-            if (value.compareAndSet(currentValue, newValue))
-                return currentValue.doubleValue();
-        }
+        return value.updateAndGet((x)-> x+ delta);
+//        while (true) {
+//            double currentValue = value.get();
+//            double newValue = currentValue + delta;
+//            if (value.compareAndSet(currentValue, newValue))
+//                return currentValue;
+//        }
     }
     
     double get() {
-    	return Double.valueOf(value.get());
+    	return value.get();
     }
 }

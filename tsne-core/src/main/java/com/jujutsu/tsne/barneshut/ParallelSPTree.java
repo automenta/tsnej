@@ -2,7 +2,7 @@ package com.jujutsu.tsne.barneshut;
 
 import static java.lang.Math.sqrt;
 
-public class ParallelSPTree extends SPTree {
+class ParallelSPTree extends SPTree {
 
 //	private static final int PAR_LIMIT = 100;
 //
@@ -26,7 +26,7 @@ public class ParallelSPTree extends SPTree {
 		super(D, inp_data, inp_corner, inp_width);
 	}
 
-	public ParallelSPTree(SPTree inp_parent, int D, double[] inp_data, double[] inp_corner, double[] inp_width) {
+	private ParallelSPTree(SPTree inp_parent, int D, double[] inp_data, double[] inp_corner, double[] inp_width) {
 		super(inp_parent, D, inp_data, inp_corner, inp_width);
 	}
 

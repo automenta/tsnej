@@ -32,43 +32,39 @@
  */
 package com.jujutsu.tsne.barneshut;
 
-import static java.lang.Math.exp;
-import static java.lang.Math.log;
+import com.jujutsu.tsne.PrincipalComponentAnalysis;
+import com.jujutsu.utils.MatrixOps;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.jujutsu.tsne.PrincipalComponentAnalysis;
-import com.jujutsu.utils.MatrixOps;
+import static java.lang.Math.exp;
+import static java.lang.Math.log;
 
 public class BHTSne implements BarnesHutTSne {
 
-	protected final Distance distance = new EuclideanDistance();
-	protected volatile boolean abort = false;
+	final Distance distance = new EuclideanDistance();
+	private volatile boolean abort = false;
 
 	@Override
 	public double[][] tsne(TSneConfiguration config) {
 		return run(config);
 	}
 
-	private double[] flatten(double[][] x) {
+	private static double[] flatten(double[][] x) {
 		int noCols = x[0].length;
 		double [] flat = new double[x.length*x[0].length];
 		for (int i = 0; i < x.length; i++) {
-			for (int j = 0; j < x[i].length; j++) {
-				flat[i*noCols+j] = x[i][j];
-			}
+            System.arraycopy(x[i], 0, flat, i * noCols + 0, x[i].length);
 		}
 		return flat;
 	}
 
-	private double [][] expand(double[]x, int N, int D) {
+	private static double [][] expand(double[] x, int N, int D) {
 		double [][] expanded = new double[N][D];
 		for (int row = 0; row < N; row++) {
-			for (int col = 0; col < D; col++) {
-				expanded[row][col] = x[row*D+col];
-			}
+            System.arraycopy(x, row * D + 0, expanded[row], 0, D);
 		}
 		return expanded;
 	}
@@ -185,7 +181,7 @@ public class BHTSne implements BarnesHutTSne {
 
 		// Perform main training loop
 		if(exact) System.out.printf("Done in %4.2f seconds!\nLearning embedding...\n", (end - start) / 1000.0);
-		else System.out.printf("Done in %4.2f seconds (sparsity = %f)!\nLearning embedding...\n", (end - start) / 1000.0, (double) row_P[N] / ((double) N * (double) N));
+		else System.out.printf("Done in %4.2f seconds (sparsity = %f)!\nLearning embedding...\n", (end - start) / 1000.0, row_P[N] / ((double) N * N));
 		start = System.currentTimeMillis();
 		for(int iter = 0; iter < parameterObject.getMaxIter() && !abort; iter++) {
 
@@ -213,7 +209,7 @@ public class BHTSne implements BarnesHutTSne {
 					double C = .0;
 					if(exact) C = evaluateError(P, Y, N, no_dims);
 					else      C = evaluateError(row_P, col_P, val_P, Y, N, no_dims, parameterObject.getTheta());  // doing approximate computation here!
-					err_string = "" + C;
+					err_string = String.valueOf(C);
 				}
 				if(iter == 0)
 					System.out.printf("Iteration %d: error is %s\n", iter + 1, err_string);
@@ -266,7 +262,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Compute gradient of the t-SNE cost function (exact)
-	void computeExactGradient(double [] P, double [] Y, int N, int D, double [] dC) {
+	private static void computeExactGradient(double[] P, double[] Y, int N, int D, double[] dC) {
 
 		// Make sure the current gradient contains zeros
 		for(int i = 0; i < N * D; i++) dC[i] = 0.0;
@@ -309,7 +305,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Evaluate t-SNE cost function (exactly)
-	double evaluateError(double [] P, double [] Y, int N, int D) {
+	private static double evaluateError(double[] P, double[] Y, int N, int D) {
 
 		// Compute the squared Euclidean distance matrix
 		double [] DD = new double[N * N];
@@ -341,7 +337,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Evaluate t-SNE cost function (approximately)
-	double evaluateError(int [] row_P, int [] col_P, double [] val_P, double [] Y, int N, int D, double theta)
+	private static double evaluateError(int[] row_P, int[] col_P, double[] val_P, double[] Y, int N, int D, double theta)
 	{
 		// Get estimate of normalization term
 		SPTree tree = new SPTree(D, Y, N);
@@ -357,7 +353,7 @@ public class BHTSne implements BarnesHutTSne {
 			for(int i = row_P[n]; i < row_P[n + 1]; i++) {
 				Q = .0;
 				ind2 = col_P[i] * D;
-				for(int d = 0; d < D; d++) buff[d]  = Y[ind1 + d];
+                System.arraycopy(Y, ind1 + 0, buff, 0, D);
 				for(int d = 0; d < D; d++) buff[d] -= Y[ind2 + d];
 				for(int d = 0; d < D; d++) Q += buff[d] * buff[d];
 				Q = (1.0 / (1.0 + Q)) / sum_Q[0];
@@ -369,7 +365,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Compute input similarities with a fixed perplexity
-	void computeGaussianPerplexity(double [] X, int N, int D, double [] P, double perplexity) {
+	private static void computeGaussianPerplexity(double[] X, int N, int D, double[] P, double perplexity) {
 
 		// Compute the squared Euclidean distance matrix
 		double [] DD = new double[N * N];
@@ -443,16 +439,13 @@ public class BHTSne implements BarnesHutTSne {
 		 *_col_P = (int*)    calloc(N * K, sizeof(int));
 		 *_val_P = (double*) calloc(N * K, sizeof(double));
 		    if(*_row_P == null || *_col_P == null || *_val_P == null) { Rcpp::stop("Memory allocation failed!\n"); }*/
-		int [] row_P = _row_P;
-		int [] col_P = _col_P;
-		double [] val_P = _val_P;
 		double [] cur_P = new double[N - 1];
 
-		row_P[0] = 0;
-		for(int n = 0; n < N; n++) row_P[n + 1] = row_P[n] + K;    
+		_row_P[0] = 0;
+		for(int n = 0; n < N; n++) _row_P[n + 1] = _row_P[n] + K;
 
 		// Build ball tree on data set
-		VpTree<DataPoint> tree = new VpTree<DataPoint>(distance);
+		VpTree<DataPoint> tree = new VpTree<>(distance);
 		final DataPoint [] obj_X = new DataPoint [N];
 		for(int n = 0; n < N; n++) {
 			double [] row = MatrixOps.extractRowFromFlatMatrix(X,n,D);
@@ -536,13 +529,13 @@ public class BHTSne implements BarnesHutTSne {
 			// Row-normalize current row of P and store in matrix 
 			for(int m = 0; m < K; m++) {
 				cur_P[m] /= sum_P;
-				col_P[row_P[n] + m] = indices.get(m + 1).index();
-				val_P[row_P[n] + m] = cur_P[m];
+				_col_P[_row_P[n] + m] = indices.get(m + 1).index();
+				_val_P[_row_P[n] + m] = cur_P[m];
 			}
 		}
 	}
 
-	void computeGaussianPerplexity(double [] X, int N, int D, int [] _row_P, int [] _col_P, double [] _val_P, double perplexity, double threshold) {
+	static void computeGaussianPerplexity(double[] X, int N, int D, int[] _row_P, int[] _col_P, double[] _val_P, double perplexity, double threshold) {
 		// Allocate some memory we need for computations
 		double [] buff  = new double[D];
 		double [] DD    = new double[N];
@@ -554,7 +547,7 @@ public class BHTSne implements BarnesHutTSne {
 
 			// Compute the squared Euclidean distance matrix
 			for(int m = 0; m < N; m++) {
-				for(int d = 0; d < D; d++) buff[d]  = X[n * D + d];
+                System.arraycopy(X, n * D + 0, buff, 0, D);
 				for(int d = 0; d < D; d++) buff[d] -= X[m * D + d];
 				DD[m] = .0;
 				for(int d = 0; d < D; d++) DD[m] += buff[d] * buff[d];
@@ -612,7 +605,7 @@ public class BHTSne implements BarnesHutTSne {
 			// Row-normalize and threshold current row of P
 			for(int m = 0; m < N; m++) cur_P[m] /= sum_P;
 			for(int m = 0; m < N; m++) {
-				if(cur_P[m] > threshold / (double) N) total_count++;
+				if(cur_P[m] > threshold / N) total_count++;
 			}
 		}
 
@@ -631,7 +624,7 @@ public class BHTSne implements BarnesHutTSne {
 
 			// Compute the squared Euclidean distance matrix
 			for(int m = 0; m < N; m++) {
-				for(int d = 0; d < D; d++) buff[d]  = X[n * D + d];
+                System.arraycopy(X, n * D + 0, buff, 0, D);
 				for(int d = 0; d < D; d++) buff[d] -= X[m * D + d];
 				DD[m] = .0;
 				for(int d = 0; d < D; d++) DD[m] += buff[d] * buff[d];
@@ -689,7 +682,7 @@ public class BHTSne implements BarnesHutTSne {
 			// Row-normalize and threshold current row of P
 			for(int m = 0; m < N; m++) cur_P[m] /= sum_P;
 			for(int m = 0; m < N; m++) {
-				if(cur_P[m] > threshold / (double) N) {
+				if(cur_P[m] > threshold / N) {
 					col_P[count] = m;
 					val_P[count] = cur_P[m];
 					count++;
@@ -700,12 +693,12 @@ public class BHTSne implements BarnesHutTSne {
 
 	}
 
-	class SymResult {
-		int []    sym_row_P;
-		int []    sym_col_P;
-		double [] sym_val_P;
+	static class SymResult {
+		final int []    sym_row_P;
+		final int []    sym_col_P;
+		final double [] sym_val_P;
 
-		public SymResult(int[] sym_row_P, int[] sym_col_P, double[] sym_val_P) {
+		SymResult(int[] sym_row_P, int[] sym_col_P, double[] sym_val_P) {
 			super();
 			this.sym_row_P = sym_row_P;
 			this.sym_col_P = sym_col_P;
@@ -713,27 +706,24 @@ public class BHTSne implements BarnesHutTSne {
 		}
 	}
 
-	SymResult symmetrizeMatrix(int [] _row_P, int [] _col_P, double [] _val_P, int N) {
+	private static SymResult symmetrizeMatrix(int[] _row_P, int[] _col_P, double[] _val_P, int N) {
 
 		// Get sparse matrix
-		int [] row_P = _row_P;
-		int [] col_P = _col_P;
-		double [] val_P = _val_P;
 
 		// Count number of elements and row counts of symmetric matrix
 		int [] row_counts = new int[N];
 		for(int n = 0; n < N; n++) {
-			for(int i = row_P[n]; i < row_P[n + 1]; i++) {
+			for(int i = _row_P[n]; i < _row_P[n + 1]; i++) {
 
 				// Check whether element (col_P[i], n) is present
 				boolean present = false;
-				for(int m = row_P[col_P[i]]; m < row_P[col_P[i] + 1]; m++) {
-					if(col_P[m] == n) present = true;
+				for(int m = _row_P[_col_P[i]]; m < _row_P[_col_P[i] + 1]; m++) {
+					if(_col_P[m] == n) present = true;
 				}
 				if(present) row_counts[n]++;
 				else {
 					row_counts[n]++;
-					row_counts[col_P[i]]++;
+					row_counts[_col_P[i]]++;
 				}
 			}
 		}
@@ -752,34 +742,34 @@ public class BHTSne implements BarnesHutTSne {
 		// Fill the result matrix
 		int [] offset = new int[N];
 		for(int n = 0; n < N; n++) {
-			for(int i = row_P[n]; i < row_P[n + 1]; i++) {                                  // considering element(n, col_P[i])
+			for(int i = _row_P[n]; i < _row_P[n + 1]; i++) {                                  // considering element(n, col_P[i])
 
 				// Check whether element (col_P[i], n) is present
 				boolean present = false;
-				for(int m = row_P[col_P[i]]; m < row_P[col_P[i] + 1]; m++) {
-					if(col_P[m] == n) {
+				for(int m = _row_P[_col_P[i]]; m < _row_P[_col_P[i] + 1]; m++) {
+					if(_col_P[m] == n) {
 						present = true;
-						if(n <= col_P[i]) {                                                 // make sure we do not add elements twice
-							sym_col_P[sym_row_P[n]        + offset[n]]        = col_P[i];
-							sym_col_P[sym_row_P[col_P[i]] + offset[col_P[i]]] = n;
-							sym_val_P[sym_row_P[n]        + offset[n]]        = val_P[i] + val_P[m];
-							sym_val_P[sym_row_P[col_P[i]] + offset[col_P[i]]] = val_P[i] + val_P[m];
+						if(n <= _col_P[i]) {                                                 // make sure we do not add elements twice
+							sym_col_P[sym_row_P[n]        + offset[n]]        = _col_P[i];
+							sym_col_P[sym_row_P[_col_P[i]] + offset[_col_P[i]]] = n;
+							sym_val_P[sym_row_P[n]        + offset[n]]        = _val_P[i] + _val_P[m];
+							sym_val_P[sym_row_P[_col_P[i]] + offset[_col_P[i]]] = _val_P[i] + _val_P[m];
 						}
 					}
 				}
 
 				// If (col_P[i], n) is not present, there is no addition involved
 				if(!present) {
-					sym_col_P[sym_row_P[n]        + offset[n]]        = col_P[i];
-					sym_col_P[sym_row_P[col_P[i]] + offset[col_P[i]]] = n;
-					sym_val_P[sym_row_P[n]        + offset[n]]        = val_P[i];
-					sym_val_P[sym_row_P[col_P[i]] + offset[col_P[i]]] = val_P[i];
+					sym_col_P[sym_row_P[n]        + offset[n]]        = _col_P[i];
+					sym_col_P[sym_row_P[_col_P[i]] + offset[_col_P[i]]] = n;
+					sym_val_P[sym_row_P[n]        + offset[n]]        = _val_P[i];
+					sym_val_P[sym_row_P[_col_P[i]] + offset[_col_P[i]]] = _val_P[i];
 				}
 
 				// Update offsets
-				if(!present || (present && n <= col_P[i])) {
+				if(!present || (present && n <= _col_P[i])) {
 					offset[n]++;
-					if(col_P[i] != n) offset[col_P[i]]++;               
+					if(_col_P[i] != n) offset[_col_P[i]]++;
 				}
 			}
 		}
@@ -791,7 +781,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Compute squared Euclidean distance matrix (using BLAS)
-	void computeSquaredEuclideanDistance(double [] X, int N, int D, double [] DD) {
+	private static void computeSquaredEuclideanDistance(double[] X, int N, int D, double[] DD) {
 		double [] dataSums = new double[N];
 		for(int n = 0; n < N; n++) {
 			for(int d = 0; d < D; d++) {
@@ -823,7 +813,7 @@ public class BHTSne implements BarnesHutTSne {
 
 
 	// Makes data zero-mean
-	void zeroMean(double [] X, int N, int D) {
+	private static void zeroMean(double[] X, int N, int D) {
 
 		// Compute data mean
 		double [] mean = new double[D];
@@ -833,7 +823,7 @@ public class BHTSne implements BarnesHutTSne {
 			}
 		}
 		for(int d = 0; d < D; d++) {
-			mean[d] /= (double) N;
+			mean[d] /= N;
 		}
 
 		// Subtract data mean
@@ -845,7 +835,7 @@ public class BHTSne implements BarnesHutTSne {
 	}
 
 	// Makes data zero-mean
-	void zeroMean(double [][] X, int N, int D) {
+	static void zeroMean(double[][] X, int N, int D) {
 
 		// Compute data mean
 		double [] mean = new double[D];
@@ -855,7 +845,7 @@ public class BHTSne implements BarnesHutTSne {
 			}
 		}
 		for(int d = 0; d < D; d++) {
-			mean[d] /= (double) N;
+			mean[d] /= N;
 		}
 
 		// Subtract data mean

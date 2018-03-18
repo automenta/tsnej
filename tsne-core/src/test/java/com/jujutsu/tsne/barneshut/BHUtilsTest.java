@@ -1,17 +1,12 @@
 package com.jujutsu.tsne.barneshut;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-
+import com.jujutsu.tsne.barneshut.VpTree.HeapItem;
 import org.junit.Test;
 
-import com.jujutsu.tsne.barneshut.VpTree.HeapItem;
+import java.util.*;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class BHUtilsTest {
 
@@ -27,12 +22,7 @@ public class BHUtilsTest {
 		
 		//System.out.println("Items=" + Arrays.toString(_items));
 		int k = 10;
-		PriorityQueue<HeapItem> heap = new PriorityQueue<HeapItem>(k,new Comparator<HeapItem>() {
-			@Override
-			public int compare(HeapItem o1, HeapItem o2) {
-				return -1 * o1.compareTo(o2);
-			}
-		}); 
+		PriorityQueue<HeapItem> heap = new PriorityQueue<>(k, (o1, o2) -> -1 * o1.compareTo(o2));
 		heap.add(new HeapItem(0, 7.2));
 		heap.add(new HeapItem(1, 4.1));
 		heap.add(new HeapItem(2, 5.1));
@@ -42,8 +32,8 @@ public class BHUtilsTest {
         //System.out.println();
         
         // // Gather final results
-		List<DataPoint> results  = new ArrayList<DataPoint>();
-		List<Double> distances = new ArrayList<Double>();
+		List<DataPoint> results  = new ArrayList<>();
+		List<Double> distances = new ArrayList<>();
 
         while(!heap.isEmpty()) {
             results.add(_items[heap.peek().index]);
@@ -81,7 +71,7 @@ public class BHUtilsTest {
 		_items[2] = new DataPoint(3,2,p3);
 		DataPoint [] expectedRes = { _items[1], _items[0], _items[2] };
 		Arrays.sort(_items, new DistanceComparator(_items[1]));
-		assertArrayEquals(expectedRes, _items);
+		assertArrayEquals(_items, expectedRes);
 	}
 	
 	@Test
@@ -180,7 +170,7 @@ public class BHUtilsTest {
 	@Test
 	public void testPrioHeap() {
 		int k = 10;
-		PriorityQueue<Integer> heap = new PriorityQueue<Integer>(k,Collections.reverseOrder());
+		PriorityQueue<Integer> heap = new PriorityQueue<>(k, Collections.reverseOrder());
 		int [] array = {5, 6, 4, 3, 2, 6, 7, 9, 3};
 		
 		for (int i = 0; i < array.length; i++) {
